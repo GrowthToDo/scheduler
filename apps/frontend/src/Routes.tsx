@@ -5,6 +5,7 @@ import { AppLayout } from "./AppLayout";
 import { Suspense } from "./components/atoms/Suspense";
 import { CheckLatestAppVersion } from "./components/molecules/CheckLatestAppVersion";
 import { RequiresSelfSettings } from "./components/personal/RequiresSelfSettings";
+import { PostHogTracker } from "./components/PostHogTracker";
 import { EntityNavigationContextProvider } from "./contexts/EntityNavigationContext";
 import { ConfirmDialogProvider } from "./providers/ConfirmDialogProvider";
 
@@ -36,6 +37,7 @@ const LazyPrivacyStatement = lazy(() => import("./routes/PrivacyStatement"));
 export const AppRoutes: FC = () => {
   return (
     <ConfirmDialogProvider>
+      <PostHogTracker />
       <Suspense fallback={null}>
         <CheckLatestAppVersion />
       </Suspense>
