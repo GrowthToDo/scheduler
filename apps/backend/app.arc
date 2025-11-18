@@ -10,10 +10,6 @@ any /api/discord
 post /api/ai/chat
 post /api/ai/embedding
 
-@lambda-urls
-post /api/ai/chat
-post /api/ai/embedding
-
 @static
 spa true
 
@@ -109,7 +105,6 @@ events
 @plugins
 architect/plugin-typescript
 custom-domain
-lambda-urls
 
 @aws
 runtime typescript
