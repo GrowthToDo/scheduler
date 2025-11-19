@@ -15,6 +15,7 @@ import {
   getLocaleFromHeaders,
   initI18n,
 } from "../../../../../libs/locales/src";
+import { handlingErrors } from "../../utils/handlingErrors";
 
 // Initialize Google Generative AI client at module level
 const apiKey = process.env.GEMINI_API_KEY || "";
@@ -177,9 +178,16 @@ function getErrorStatusCode(error: unknown): number {
   return 500;
 }
 
-export const handler = async (
+const handlerImpl = async (
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResult> => {
+  // Log request details for debugging
+  console.log("AI chat handler called", {
+    method: event.requestContext.http.method,
+    path: event.rawPath,
+    routeKey: event.requestContext.routeKey,
+  });
+
   try {
     // Only handle POST requests
     if (event.requestContext.http.method !== "POST") {
@@ -343,8 +351,6 @@ export const handler = async (
       },
     };
   } catch (error) {
-    console.error("Error in AI chat handler:", error);
-
     // Convert to Boom error if not already
     let boomError;
     if (error && typeof error === "object" && "isBoom" in error) {
@@ -359,6 +365,28 @@ export const handler = async (
     const errorMessage =
       boomError instanceof Error ? boomError.message : String(boomError);
 
+    // Enhanced error logging
+    const errorDetails = {
+      message: errorMessage,
+      statusCode,
+      errorType: error instanceof Error ? error.constructor.name : typeof error,
+      stack: error instanceof Error ? error.stack : undefined,
+      requestMethod: event.requestContext?.http?.method,
+      requestPath: event.requestContext?.http?.path,
+      requestId: event.requestContext?.requestId,
+      isBoom:
+        boomError && typeof boomError === "object" && "isBoom" in boomError,
+    };
+
+    console.error(
+      "Error in AI chat handler:",
+      JSON.stringify(errorDetails, null, 2)
+    );
+
+    if (error instanceof Error && error.stack) {
+      console.error("Error stack trace:", error.stack);
+    }
+
     return {
       statusCode,
       body: JSON.stringify({ error: errorMessage }),
@@ -368,3 +396,5 @@ export const handler = async (
     };
   }
 };
+
+export const handler = handlingErrors(handlerImpl);

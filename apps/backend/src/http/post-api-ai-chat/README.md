@@ -83,11 +83,7 @@ while (true) {
 
 ## Deployment
 
-This endpoint uses the `@lambda-urls` directive in `app.arc`, which:
-
-- Creates Lambda Function URL with streaming enabled
-- Configures CORS for browser access
-- Supports local development via Architect sandbox
+This endpoint uses Lambda Function URLs with streaming enabled for real-time AI responses.
 
 ## Local Development
 
