@@ -60,9 +60,18 @@ export const handlingErrors = (
         message: translatedMessage,
       };
 
+      // Ensure API error responses have proper headers to prevent CloudFront
+      // from serving custom error pages (index.html) for 403/404 responses
+      const responseHeaders = {
+        ...headers,
+        "Content-Type": "application/json",
+        "Cache-Control": "no-store, no-cache, must-revalidate",
+        "X-Content-Type-Options": "nosniff",
+      } as Record<string, string | number | boolean>;
+
       return {
         statusCode,
-        headers: headers as Record<string, string | number | boolean>,
+        headers: responseHeaders,
         body: JSON.stringify(updatedPayload),
       };
     }

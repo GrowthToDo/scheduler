@@ -196,6 +196,8 @@ const handlerImpl = async (
         body: JSON.stringify({ error: "Method not allowed" }),
         headers: {
           "Content-Type": "application/json",
+          "Cache-Control": "no-store, no-cache, must-revalidate",
+          "X-Content-Type-Options": "nosniff",
         },
       };
     }
@@ -392,6 +394,8 @@ const handlerImpl = async (
       body: JSON.stringify({ error: errorMessage }),
       headers: {
         "Content-Type": "application/json",
+        "Cache-Control": "no-store, no-cache, must-revalidate",
+        "X-Content-Type-Options": "nosniff",
       },
     };
   }
