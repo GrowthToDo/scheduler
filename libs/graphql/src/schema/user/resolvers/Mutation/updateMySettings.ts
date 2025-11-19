@@ -1,13 +1,16 @@
-import { notFound } from "@hapi/boom";
+import { badRequest, notFound } from "@hapi/boom";
 
 import { requireSession } from "../../../../session/requireSession";
 
 import type { MutationResolvers, User } from "./../../../../types.generated";
 
+import { settingsTypes } from "@/settings";
 import { database } from "@/tables";
 import { resourceRef } from "@/utils";
 
-export const updateMySettings: NonNullable<MutationResolvers['updateMySettings']> = async (_parent, args, ctx) => {
+export const updateMySettings: NonNullable<
+  MutationResolvers["updateMySettings"]
+> = async (_parent, args, ctx) => {
   const session = await requireSession(ctx);
   const userId = session.user?.id;
   if (!userId) {
@@ -19,10 +22,24 @@ export const updateMySettings: NonNullable<MutationResolvers['updateMySettings']
     throw notFound("User not found");
   }
   const userRef = resourceRef("users", userId);
+  if (!(args.name in settingsTypes)) {
+    throw badRequest("Invalid settings name");
+  }
+  // Skip update if settings is empty object (no fields provided)
+  if (
+    typeof args.settings === "object" &&
+    args.settings !== null &&
+    Object.keys(args.settings).length === 0
+  ) {
+    return user as unknown as User;
+  }
+  const settings = settingsTypes[args.name as keyof typeof settingsTypes].parse(
+    args.settings
+  );
   await entity_settings.upsert({
     pk: userRef,
     sk: args.name,
-    settings: args.settings,
+    settings,
     createdAt: new Date().toISOString(),
     createdBy: userRef,
     updatedAt: new Date().toISOString(),
