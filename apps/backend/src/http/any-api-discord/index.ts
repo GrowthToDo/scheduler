@@ -1,3 +1,4 @@
+import { badRequest, methodNotAllowed } from "@hapi/boom";
 import { APIGatewayProxyEventV2, APIGatewayProxyResult } from "aws-lambda";
 
 import { handlingErrors } from "../../utils/handlingErrors";
@@ -13,7 +14,7 @@ export const handler = handlingErrors(
   async (event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResult> => {
     // Only handle POST requests
     if (event.requestContext.http.method !== "POST") {
-      return discordResponse("Method not allowed", 405);
+      throw methodNotAllowed("Method not allowed");
     }
 
     // Verify Discord webhook signature
@@ -28,11 +29,8 @@ export const handler = handlingErrors(
     let body;
     try {
       body = JSON.parse(event.body || "{}");
-    } catch (error) {
-      console.error("Error parsing Discord webhook payload:", error);
-      return discordResponse(
-        "❌ **Error:** Invalid JSON payload. Request could not be parsed."
-      );
+    } catch {
+      throw badRequest("Invalid JSON payload. Request could not be parsed.");
     }
 
     // Handle Discord interaction
