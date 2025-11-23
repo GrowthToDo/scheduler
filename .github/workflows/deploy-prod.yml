@@ -1,12 +1,20 @@
 name: Deploy Prod
 
 on:
+  # TEMPORARILY CHANGED: Trigger directly from Test workflow instead of E2E Tests
   workflow_run:
-    workflows: ["E2E Tests"]
+    workflows: ["Test"]
     types:
       - completed
     branches:
       - main
+  # Original trigger (commented out temporarily):
+  # workflow_run:
+  #   workflows: ["E2E Tests"]
+  #   types:
+  #     - completed
+  #   branches:
+  #     - main
 
 jobs:
   deploy:
