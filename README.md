@@ -4,6 +4,10 @@
 
 TimeClout is a modern, AI-powered team scheduling and workforce management platform designed to streamline shift planning, leave management, and team coordination. Built for organizations that value efficiency, fairness, and employee satisfaction.
 
+## 📚 Technical Documentation
+
+**For developers and contributors**: Check out our comprehensive [**Technical Documentation**](./docs/README.md) covering architecture, development setup, testing, deployment, and more.
+
 ## 🌐 Try TimeClout Online
 
 **Get started instantly**: Access TimeClout at [**timeclout.com**](https://timeclout.com) - no installation required, just sign up and start scheduling your team.
@@ -111,6 +115,7 @@ TimeClout is a modern, AI-powered team scheduling and workforce management platf
 - **Discord Community**: Join our support channel at [discord.gg/QaM4YqZk](https://discord.gg/QaM4YqZk)
 - **AI Assistant**: Built-in help available 24/7
 - **Documentation**: Comprehensive contextual help throughout the application
+- **Technical Documentation**: See [docs/README.md](./docs/README.md) for detailed technical documentation
 - **Email Support**: Contact us at support@timeclout.com
 - **Multi-language**: Full support in English and Portuguese
 
