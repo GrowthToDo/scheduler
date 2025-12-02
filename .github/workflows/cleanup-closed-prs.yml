@@ -36,3 +36,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           bash scripts/cleanup-closed-prs.sh --force
+
+      - name: Run cleanup of CloudWatch log groups for closed PRs
+        env:
+          # Provide token so gh CLI is authenticated non-interactively
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          bash scripts/cleanup-pr-log-groups.sh --force
