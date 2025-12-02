@@ -140,7 +140,7 @@
     "zod": "^4.0.0"
   },
   "devDependencies": {
-    "@architect/architect": "^11.1.0",
+    "@architect/architect": "^12.0.0",
     "@architect/plugin-typescript": "^2.1.0",
     "@eslint/js": "^9.17.0",
     "@graphql-codegen/cli": "^6.0.0",
@@ -160,7 +160,7 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react-swc": "^4.0.0",
-    "chokidar": "^4.0.3",
+    "chokidar": "^5.0.0",
     "dotenv": "^17.2.1",
     "eslint": "^9.17.0",
     "eslint-plugin-import": "^2.32.0",
@@ -180,7 +180,7 @@
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^4.0.0"
   },
-  "packageManager": "pnpm@10.23.0",
+  "packageManager": "pnpm@10.24.0",
   "pnpm": {
     "patchedDependencies": {
       "@architect/functions": "patches/@architect__functions.patch",
