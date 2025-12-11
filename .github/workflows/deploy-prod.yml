@@ -1,6 +1,10 @@
 name: Deploy Prod
 
 on:
+  # Allow manual runs from the Actions tab
+  workflow_dispatch:
+
+  # Keep original behaviour: run after E2E Tests succeed on main
   workflow_run:
     workflows: ["E2E Tests"]
     types:
@@ -10,12 +14,19 @@ on:
 
 jobs:
   deploy:
-    if: ${{ github.event_name != 'pull_request' && github.event.workflow_run.conclusion == 'success' }}
+    # For manual runs: always run.
+    # For workflow_run: only run if E2E Tests concluded successfully.
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+
     runs-on: ubuntu-latest
+
     # Security: Explicit permissions - only what's needed
     permissions:
       contents: read
       id-token: write
+
     concurrency:
       group: deploy-prod
       cancel-in-progress: false
@@ -26,7 +37,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: eu-west-2
+          aws-region: ${{ secrets.AWS_REGION }}
 
       - uses: actions/checkout@v5
 
@@ -57,30 +68,37 @@ jobs:
       - name: Deploy to production
         env:
           NODE_ENV: "production"
-          BASE_URL: "https://app.timeclout.com"
+          BASE_URL: "https://scheduler.growth2do.com"
           NODE_OPTIONS: "--enable-source-maps --max_old_space_size=32768"
+
           AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
           MAILGUN_KEY: ${{ secrets.MAILGUN_KEY }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+
           AWS_CERTIFICATE_ARN: ${{ secrets.AWS_CERTIFICATE_ARN }}
           AWS_ZONE_ID: ${{ secrets.AWS_ZONE_ID }}
-          VITE_PUBLIC_SENTRY_DSN: "${{secrets.VITE_SENTRY_DSN}}"
+
+          VITE_PUBLIC_SENTRY_DSN: "${{ secrets.VITE_SENTRY_DSN }}"
           VITE_PUBLIC_POSTHOG_KEY: ${{ secrets.VITE_PUBLIC_POSTHOG_KEY }}
           VITE_PUBLIC_POSTHOG_HOST: "https://eu.i.posthog.com"
-          SENTRY_DSN: "${{secrets.VITE_SENTRY_DSN}}"
+
+          SENTRY_DSN: "${{ secrets.VITE_SENTRY_DSN }}"
           SENTRY_TRACES_SAMPLE_RATE: "1.0"
           SENTRY_PROFILES_SAMPLE_RATE: "1.0"
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_RELEASE: ${{ steps.sentry-release.outputs.release }}
+
           DISCORD_PUBLIC_KEY: ${{ secrets.DISCORD_PUBLIC_KEY }}
           DISCORD_CS_USERS: ${{ secrets.DISCORD_CS_USERS }}
           DISCORD_APPLICATION_ID: ${{ secrets.DISCORD_APPLICATION_ID }}
           DISCORD_CS_BOT_TOKEN: ${{ secrets.DISCORD_CS_BOT_TOKEN }}
+
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           cd apps/backend
           export PATH=../../node_modules/.bin:$PATH
+
           pnpm arc env --add --env production AUTH_SECRET "${AUTH_SECRET}"
           pnpm arc env --add --env production MAILGUN_KEY "${MAILGUN_KEY}"
           pnpm arc env --add --env production GOOGLE_CLIENT_ID "${GOOGLE_CLIENT_ID}"
@@ -92,8 +110,10 @@ jobs:
           pnpm arc env --add --env production DISCORD_PUBLIC_KEY "${DISCORD_PUBLIC_KEY}"
           pnpm arc env --add --env production DISCORD_CS_USERS "${DISCORD_CS_USERS}"
           pnpm arc env --add --env production GEMINI_API_KEY "${GEMINI_API_KEY}"
+
           cd ../..
           pnpm build
+
           cd apps/backend
           pnpm arc deploy --production --no-hydrate --verbose
 
