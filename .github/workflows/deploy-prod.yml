@@ -30,7 +30,8 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION || 'eu-west-2' }}
+          # GitHub Actions doesn't support `||` here. Use a plain default.
+          aws-region: eu-west-2
 
       - uses: actions/checkout@v5
 
@@ -76,6 +77,7 @@ jobs:
 
           VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
           VITE_PUBLIC_POSTHOG_KEY: ${{ secrets.VITE_PUBLIC_POSTHOG_KEY }}
+          VITE_PUBLIC_POSTHOG_HOST: "https://eu.i.posthog.com"
 
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           DISCORD_PUBLIC_KEY: ${{ secrets.DISCORD_PUBLIC_KEY }}
@@ -86,39 +88,52 @@ jobs:
 
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
+          SENTRY_TRACES_SAMPLE_RATE: "1.0"
+          SENTRY_PROFILES_SAMPLE_RATE: "1.0"
+
+          SENTRY_RELEASE: ${{ steps.sentry-release.outputs.release }}
+
         run: |
           set -euo pipefail
 
           cd apps/backend
           export PATH=../../node_modules/.bin:$PATH
 
+          # Avoid ANY interactive prompts in CI
+          export CI=true
+
           add_arc_env () {
             local key="$1"
             local val="${2:-}"
+
             if [ -z "$val" ]; then
               echo "⏭️  Skipping $key (empty / not set in GitHub secrets)"
               return 0
             fi
+
             echo "✅ Setting $key in Architect production env"
-            # Avoid interactive prompt in CI
+            # Force non-interactive (answer "n" to local preferences prompt)
             printf "n\n" | pnpm arc env --add --env production "$key" "$val"
           }
 
+          # Core auth / app
           add_arc_env "AUTH_SECRET" "$AUTH_SECRET"
           add_arc_env "ARC_APP_SECRET" "$ARC_APP_SECRET"
 
+          # Integrations
           add_arc_env "MAILGUN_KEY" "$MAILGUN_KEY"
           add_arc_env "GOOGLE_CLIENT_ID" "$GOOGLE_CLIENT_ID"
           add_arc_env "GOOGLE_CLIENT_SECRET" "$GOOGLE_CLIENT_SECRET"
 
+          # AWS metadata (only if your app actually reads these from env)
           add_arc_env "AWS_CERTIFICATE_ARN" "$AWS_CERTIFICATE_ARN"
           add_arc_env "AWS_ZONE_ID" "$AWS_ZONE_ID"
 
-          # Sentry (keep naming consistent in your app)
+          # Sentry
           add_arc_env "SENTRY_DSN" "$VITE_SENTRY_DSN"
-          add_arc_env "SENTRY_TRACES_SAMPLE_RATE" "1.0"
-          add_arc_env "SENTRY_PROFILES_SAMPLE_RATE" "1.0"
-          add_arc_env "SENTRY_RELEASE" "${{ steps.sentry-release.outputs.release }}"
+          add_arc_env "SENTRY_TRACES_SAMPLE_RATE" "$SENTRY_TRACES_SAMPLE_RATE"
+          add_arc_env "SENTRY_PROFILES_SAMPLE_RATE" "$SENTRY_PROFILES_SAMPLE_RATE"
+          add_arc_env "SENTRY_RELEASE" "$SENTRY_RELEASE"
 
           # Discord / Gemini
           add_arc_env "DISCORD_PUBLIC_KEY" "$DISCORD_PUBLIC_KEY"
@@ -132,13 +147,18 @@ jobs:
           pnpm arc deploy --production --no-hydrate --verbose
 
       - name: Create Sentry Release
-        if: success() && env.SENTRY_AUTH_TOKEN != ''
+        if: success()
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: "tt3"
           SENTRY_PROJECT: "tt3"
           SENTRY_RELEASE: ${{ steps.sentry-release.outputs.release }}
         run: |
+          if [ -z "${SENTRY_AUTH_TOKEN:-}" ]; then
+            echo "⏭️  Skipping Sentry release (SENTRY_AUTH_TOKEN not set)"
+            exit 0
+          fi
+
           echo "📦 Creating Sentry release: ${SENTRY_RELEASE}"
           npx @sentry/cli releases new "${SENTRY_RELEASE}" || true
           npx @sentry/cli releases set-commits "${SENTRY_RELEASE}" --auto || true
@@ -146,16 +166,21 @@ jobs:
           echo "✅ Sentry release ${SENTRY_RELEASE} created and finalized"
 
       - name: Register Discord Commands
-        if: success() && env.DISCORD_APPLICATION_ID != '' && env.DISCORD_CS_BOT_TOKEN != ''
+        if: success()
         env:
           DISCORD_APPLICATION_ID: ${{ secrets.DISCORD_APPLICATION_ID }}
           DISCORD_CS_BOT_TOKEN: ${{ secrets.DISCORD_CS_BOT_TOKEN }}
         run: |
+          if [ -z "${DISCORD_APPLICATION_ID:-}" ] || [ -z "${DISCORD_CS_BOT_TOKEN:-}" ]; then
+            echo "⏭️  Skipping Discord command registration (missing secrets)"
+            exit 0
+          fi
+
           echo "🔄 Registering Discord slash commands..."
           pnpm discord:register-commands
 
       - name: Send Discord notification
-        if: failure() && secrets.DISCORD_CI_WEBHOOK_URL != ''
+        if: failure()
         uses: ./.github/actions/discord-notification
         with:
           webhook_url: ${{ secrets.DISCORD_CI_WEBHOOK_URL }}
