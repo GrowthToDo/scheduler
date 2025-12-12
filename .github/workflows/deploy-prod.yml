@@ -72,6 +72,8 @@ jobs:
           NODE_OPTIONS: "--enable-source-maps --max_old_space_size=32768"
 
           AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
+          ARC_APP_SECRET: ${{ secrets.ARC_APP_SECRET }}
+
           MAILGUN_KEY: ${{ secrets.MAILGUN_KEY }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
@@ -100,6 +102,8 @@ jobs:
           export PATH=../../node_modules/.bin:$PATH
 
           pnpm arc env --add --env production AUTH_SECRET "${AUTH_SECRET}"
+          pnpm arc env --add --env production ARC_APP_SECRET "${ARC_APP_SECRET}"
+
           pnpm arc env --add --env production MAILGUN_KEY "${MAILGUN_KEY}"
           pnpm arc env --add --env production GOOGLE_CLIENT_ID "${GOOGLE_CLIENT_ID}"
           pnpm arc env --add --env production GOOGLE_CLIENT_SECRET "${GOOGLE_CLIENT_SECRET}"
