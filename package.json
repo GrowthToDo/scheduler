@@ -1,6 +1,6 @@
 {
   "name": "timeclout",
-  "version": "3.2.5",
+  "version": "3.2.6",
   "description": "",
   "type": "module",
   "main": "index.js",
@@ -140,7 +140,7 @@
     "zod": "^4.0.0"
   },
   "devDependencies": {
-    "@architect/architect": "^11.1.0",
+    "@architect/architect": "^12.0.0",
     "@architect/plugin-typescript": "^2.1.0",
     "@eslint/js": "^9.17.0",
     "@graphql-codegen/cli": "^6.0.0",
@@ -180,7 +180,7 @@
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^4.0.0"
   },
-  "packageManager": "pnpm@10.24.0",
+  "packageManager": "pnpm@10.25.0",
   "pnpm": {
     "patchedDependencies": {
       "@architect/functions": "patches/@architect__functions.patch",
